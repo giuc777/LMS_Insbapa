@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSBAPA | Registro de Estudiante</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="img/logo-insbapa.png">
+</head>
+<body class="login-body">
+
+  <div class="login-split">
+
+    <!-- ===================== LADO IZQUIERDO: IMAGEN + MARCA ===================== -->
+    <aside class="login-hero" id="loginHero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-brand">
+          <img src="img/logo-insbapa.png" alt="Logo INSBAPA">
+          <div>
+            <div class="hero-institute">INSBAPA</div>
+            <div class="hero-edu">LMS Secundaria · Ciclo Básico</div>
+          </div>
+        </div>
+        <h2 id="heroTitle">Registro de estudiantes</h2>
+        <p id="heroTagline">Ingresa el código de matrícula que la institución te entregó para crear tu propio perfil y acceder a la plataforma.</p>
+      </div>
+      <div class="hero-copy">© 2024 INSBAPA · Instituto Nacional de Educación Secundaria</div>
+    </aside>
+
+    <!-- ===================== LADO DERECHO: FORMULARIO ===================== -->
+    <main class="login-panel">
+      <div class="login-form-box">
+
+        <div class="login-mobile-brand">
+          <img src="img/logo-insbapa.png" alt="Logo INSBAPA">
+          <div class="login-mobile-name">INSBAPA</div>
+        </div>
+
+        <button class="btn btn-outline btn-sm" type="button" id="btnVolverLogin" style="margin-bottom:14px">← Volver a Iniciar Sesión</button>
+
+        <h1>Crear mi cuenta</h1>
+        <p class="login-subtitle">Primero valida tu código de matrícula y luego completa tus datos.</p>
+
+        <!-- Mensaje de error -->
+        <div class="login-error" id="registroError" role="alert">
+          No se pudo completar el registro. Verifica los datos e intenta de nuevo.
+        </div>
+
+        <!-- PASO 1: TOKEN -->
+        <div id="pasoToken">
+          <form id="formToken" novalidate>
+            <div class="form-group">
+              <label for="tokenRegistro">CÓDIGO DE MATRÍCULA</label>
+              <input class="form-control" id="tokenRegistro" type="text" placeholder="REG-XXXXXXXX" autocomplete="off">
+              <div class="field-error" id="err-tokenRegistro">El código de matrícula es obligatorio.</div>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">Validar Código</button>
+          </form>
+        </div>
+
+        <!-- PASO 2: DATOS PERSONALES -->
+        <div id="pasoDatos" style="display:none">
+          <div class="registro-token-ok" id="tokenOk"></div>
+          <form id="formRegistro" novalidate>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:0 14px">
+              <div class="form-group">
+                <label for="rgPrimerNombre">Primer nombre</label>
+                <input class="form-control" id="rgPrimerNombre" type="text">
+                <div class="field-error" id="err-rgPrimerNombre">Obligatorio.</div>
+              </div>
+              <div class="form-group">
+                <label for="rgSegundoNombre">Segundo nombre</label>
+                <input class="form-control" id="rgSegundoNombre" type="text">
+              </div>
+              <div class="form-group">
+                <label for="rgPrimerApellido">Primer apellido</label>
+                <input class="form-control" id="rgPrimerApellido" type="text">
+                <div class="field-error" id="err-rgPrimerApellido">Obligatorio.</div>
+              </div>
+              <div class="form-group">
+                <label for="rgSegundoApellido">Segundo apellido</label>
+                <input class="form-control" id="rgSegundoApellido" type="text">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="rgEmail">Correo electrónico</label>
+              <input class="form-control" id="rgEmail" type="email" placeholder="tucorreo@ejemplo.com">
+              <div class="field-error" id="err-rgEmail">Ingresa un correo válido.</div>
+            </div>
+
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:0 14px">
+              <div class="form-group">
+                <label for="rgGrado">Grado</label>
+                <select class="form-control" id="rgGrado"></select>
+                <div class="field-error" id="err-rgGrado">Selecciona un grado.</div>
+              </div>
+              <div class="form-group">
+                <label for="rgSeccion">Sección</label>
+                <select class="form-control" id="rgSeccion"></select>
+                <div class="field-error" id="err-rgSeccion">Selecciona una sección.</div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="rgUsuario">Nombre de usuario</label>
+              <input class="form-control" id="rgUsuario" type="text" placeholder="Ej. ana.castillo" autocomplete="username">
+              <div class="field-error" id="err-rgUsuario">El usuario ya existe o es inválido.</div>
+            </div>
+
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:0 14px">
+              <div class="form-group">
+                <label for="rgPassword">Contraseña</label>
+                <input class="form-control" id="rgPassword" type="password" autocomplete="new-password">
+                <div class="field-error" id="err-rgPassword">Mínimo 6 caracteres.</div>
+              </div>
+              <div class="form-group">
+                <label for="rgPassword2">Confirmar contraseña</label>
+                <input class="form-control" id="rgPassword2" type="password" autocomplete="new-password">
+                <div class="field-error" id="err-rgPassword2">Las contraseñas no coinciden.</div>
+              </div>
+            </div>
+
+            <div class="flex" style="justify-content:space-between;gap:10px;margin-top:6px">
+              <button class="btn btn-outline" type="button" id="btnCambiarToken">← Cambiar código</button>
+              <button class="btn btn-primary" type="submit">Crear mi cuenta</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="demo-credentials">
+          <span class="dc-label">CÓDIGO DEMO</span>
+          <span>Estudiante: <b>REG-DEMO2026</b></span>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/ui.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/registro.js"></script>
+</body>
+</html>

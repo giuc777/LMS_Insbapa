@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSBAPA | Plataforma Educativa</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" type="image/png" href="img/logo-insbapa.png">
+</head>
+<body>
+
+  <div class="sys-shell">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="img/logo-insbapa.png" alt="INSBAPA">
+        <div>
+          <div class="brand-name">INSBAPA</div>
+          <div class="brand-sub" id="brandSub">LMS Secundaria</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebarNav"><!-- lo llena app.js --></nav>
+
+      <div class="sidebar-user" id="sidebarUser"><!-- lo llena app.js --></div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <div class="sys-main">
+
+      <header class="topbar">
+        <button class="btn btn-outline btn-sm" id="btnSidebar" style="margin-right:8px">☰</button>
+        <div class="search-box">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></span>
+          <input class="form-control" id="globalSearch" type="text" placeholder="Buscar cursos, tareas o anuncios...">
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-date" id="topbarDate"></span>
+        </div>
+      </header>
+
+      <main class="sys-content" id="view">
+        <!-- Contenido renderizado por app.js -->
+      </main>
+
+    </div>
+  </div>
+
+  <script src="js/ui.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/modulos/estudiante/dashboard.js"></script>
+  <script src="js/modulos/estudiante/anuncios.js"></script>
+  <script src="js/modulos/estudiante/cursos.js"></script>
+  <script src="js/modulos/estudiante/tareas.js"></script>
+  <script src="js/modulos/estudiante/examenes.js"></script>
+  <script src="js/modulos/estudiante/notas.js"></script>
+  <script src="js/modulos/profesor/dashboard.js"></script>
+  <script src="js/modulos/profesor/clases.js"></script>
+  <script src="js/modulos/profesor/tareas.js"></script>
+  <script src="js/modulos/profesor/notas.js"></script>
+  <script src="js/modulos/profesor/materiales.js"></script>
+  <script src="js/modulos/profesor/examenes.js"></script>
+  <script src="js/modulos/profesor/anuncios.js"></script>
+  <script src="js/modulos/admin/dashboard.js"></script>
+  <script src="js/modulos/admin/cursos.js"></script>
+  <script src="js/modulos/admin/estudiantes.js"></script>
+  <script src="js/modulos/admin/profesores.js"></script>
+  <script src="js/modulos/admin/notas.js"></script>
+  <script src="js/modulos/admin/anuncios.js"></script>
+  <script src="js/modulos/admin/tokens.js"></script>
+  <script src="js/modulos/admin/mantenimiento.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
