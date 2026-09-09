@@ -442,5 +442,187 @@ BEGIN
 END
 GO
 
+-- =============================================================
+-- SP: SP_RegistrarProfesor
+-- Crea PERSONA + USUARIO + PROFESOR en una transacción.
+-- La contraseña ya viene hasheada desde .NET (BCrypt).
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_RegistrarProfesor')
+    DROP PROCEDURE SP_RegistrarProfesor;
+GO
+
+CREATE PROCEDURE SP_RegistrarProfesor
+    @PrimerNombre     NVARCHAR(50),
+    @SegundoNombre    NVARCHAR(50),
+    @PrimerApellido   NVARCHAR(50),
+    @SegundoApellido  NVARCHAR(50),
+    @Correo           NVARCHAR(100),
+    @Telefono         NVARCHAR(20),
+    @Username         NVARCHAR(50),
+    @ContrasenaHash   NVARCHAR(200),
+    @CodigoProfesor   NVARCHAR(20),
+    @MateriaPrincipal NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- 1. Verificar que el username no exista
+        IF EXISTS (SELECT 1 FROM USUARIOS WHERE Username = @Username)
+        BEGIN
+            RAISERROR('El nombre de usuario ya existe.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 2. Verificar que el correo no exista
+        IF EXISTS (SELECT 1 FROM PERSONAS WHERE Correo = @Correo AND Activo = 1)
+        BEGIN
+            RAISERROR('El correo ya está registrado.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 3. Obtener Rol Profesor
+        DECLARE @RolProfesorID INT;
+        SELECT @RolProfesorID = Rol_ID FROM ROLES WHERE Nombre = 'Profesor';
+
+        -- 4. Insertar PERSONA
+        DECLARE @PersonaID INT;
+        INSERT INTO PERSONAS (PrimerNombre, SegundoNombre, PrimerApellido, SegundoApellido, Correo, Telefono)
+        VALUES (@PrimerNombre, @SegundoNombre, @PrimerApellido, @SegundoApellido, @Correo, @Telefono);
+        SET @PersonaID = SCOPE_IDENTITY();
+
+        -- 5. Insertar USUARIO
+        DECLARE @UsuarioID INT;
+        DECLARE @Iniciales NVARCHAR(10) = UPPER(LEFT(@PrimerNombre, 1) + LEFT(@PrimerApellido, 1));
+        INSERT INTO USUARIOS (Username, Contrasena, Iniciales, Rol_ID, Persona_ID)
+        VALUES (@Username, @ContrasenaHash, @Iniciales, @RolProfesorID, @PersonaID);
+        SET @UsuarioID = SCOPE_IDENTITY();
+
+        -- 6. Generar código profesor si no se proporcionó
+        IF @CodigoProfesor IS NULL OR LTRIM(RTRIM(@CodigoProfesor)) = ''
+        BEGIN
+            DECLARE @Secuencial INT;
+            SELECT @Secuencial = COUNT(*) + 1 FROM PROFESORES;
+            SET @CodigoProfesor = 'PRF-' + RIGHT('000' + CAST(@Secuencial AS NVARCHAR(4)), 3);
+        END
+
+        -- 7. Verificar que el código no exista
+        IF EXISTS (SELECT 1 FROM PROFESORES WHERE CodigoProfesor = @CodigoProfesor)
+        BEGIN
+            RAISERROR('El código de profesor ya existe.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 8. Insertar PROFESOR
+        INSERT INTO PROFESORES (CodigoProfesor, MateriaPrincipal, Persona_ID, Usuario_ID)
+        VALUES (@CodigoProfesor, @MateriaPrincipal, @PersonaID, @UsuarioID);
+
+        COMMIT TRANSACTION;
+
+        -- Retornar datos del usuario creado
+        SELECT
+            @UsuarioID        AS Usuario_ID,
+            @Username         AS Username,
+            @Iniciales        AS Iniciales,
+            N'Profesor'       AS Rol,
+            @PrimerNombre     AS PrimerNombre,
+            @PrimerApellido   AS PrimerApellido,
+            @Correo           AS Correo,
+            @CodigoProfesor   AS CodigoProfesor,
+            @MateriaPrincipal AS MateriaPrincipal;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMsg, 16, 1);
+    END CATCH
+END
+GO
+
+-- =============================================================
+-- SP: SP_RegistrarAdministrador
+-- Crea PERSONA + USUARIO con rol Administrador en una transacción.
+-- La contraseña ya viene hasheada desde .NET (BCrypt).
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_RegistrarAdministrador')
+    DROP PROCEDURE SP_RegistrarAdministrador;
+GO
+
+CREATE PROCEDURE SP_RegistrarAdministrador
+    @PrimerNombre    NVARCHAR(50),
+    @SegundoNombre   NVARCHAR(50),
+    @PrimerApellido  NVARCHAR(50),
+    @SegundoApellido NVARCHAR(50),
+    @Correo          NVARCHAR(100),
+    @Telefono        NVARCHAR(20),
+    @Username        NVARCHAR(50),
+    @ContrasenaHash  NVARCHAR(200)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- 1. Verificar que el username no exista
+        IF EXISTS (SELECT 1 FROM USUARIOS WHERE Username = @Username)
+        BEGIN
+            RAISERROR('El nombre de usuario ya existe.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 2. Verificar que el correo no exista
+        IF EXISTS (SELECT 1 FROM PERSONAS WHERE Correo = @Correo AND Activo = 1)
+        BEGIN
+            RAISERROR('El correo ya está registrado.', 16, 1);
+            ROLLBACK TRANSACTION;
+            RETURN;
+        END
+
+        -- 3. Obtener Rol Administrador
+        DECLARE @RolAdminID INT;
+        SELECT @RolAdminID = Rol_ID FROM ROLES WHERE Nombre = 'Administrador';
+
+        -- 4. Insertar PERSONA
+        DECLARE @PersonaID INT;
+        INSERT INTO PERSONAS (PrimerNombre, SegundoNombre, PrimerApellido, SegundoApellido, Correo, Telefono)
+        VALUES (@PrimerNombre, @SegundoNombre, @PrimerApellido, @SegundoApellido, @Correo, @Telefono);
+        SET @PersonaID = SCOPE_IDENTITY();
+
+        -- 5. Insertar USUARIO
+        DECLARE @UsuarioID INT;
+        DECLARE @Iniciales NVARCHAR(10) = UPPER(LEFT(@PrimerNombre, 1) + LEFT(@PrimerApellido, 1));
+        INSERT INTO USUARIOS (Username, Contrasena, Iniciales, Rol_ID, Persona_ID)
+        VALUES (@Username, @ContrasenaHash, @Iniciales, @RolAdminID, @PersonaID);
+        SET @UsuarioID = SCOPE_IDENTITY();
+
+        COMMIT TRANSACTION;
+
+        -- Retornar datos del usuario creado
+        SELECT
+            @UsuarioID      AS Usuario_ID,
+            @Username       AS Username,
+            @Iniciales      AS Iniciales,
+            N'Administrador' AS Rol,
+            @PrimerNombre   AS PrimerNombre,
+            @PrimerApellido AS PrimerApellido,
+            @Correo         AS Correo;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMsg, 16, 1);
+    END CATCH
+END
+GO
+
 PRINT 'Procedimientos almacenados creados correctamente.';
 GO
