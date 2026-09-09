@@ -1,0 +1,295 @@
+<div class="usuarios-section">
+  <div class="usuarios-header">
+    <h3>Gestión de Usuarios</h3>
+    <p class="muted">Crear, buscar y gestionar usuarios del sistema.</p>
+  </div>
+
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button class="tab" [class.active]="pestanaActiva() === 'estudiantes'" (click)="cambiarPestana('estudiantes')">
+      Estudiantes
+    </button>
+    <button class="tab" [class.active]="pestanaActiva() === 'profesores'" (click)="cambiarPestana('profesores')">
+      Profesores
+    </button>
+    <button class="tab" [class.active]="pestanaActiva() === 'administradores'" (click)="cambiarPestana('administradores')">
+      Administradores
+    </button>
+  </div>
+
+  <!-- Barra de herramientas -->
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="Buscar..." [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" (keyup.enter)="onBusqueda()">
+    </div>
+
+    @if (pestanaActiva() === 'estudiantes') {
+      <select class="form-select" [value]="gradoFiltro()" (change)="gradoFiltro.set($any($event.target).value); onBusqueda()">
+        <option value="">Todos los grados</option>
+        @for (g of grados(); track g.Grado_ID) {
+          <option [value]="g.Grado_ID">{{ g.Nombre }}</option>
+        }
+      </select>
+      <select class="form-select" [value]="seccionFiltro()" (change)="seccionFiltro.set($any($event.target).value); onBusqueda()">
+        <option value="">Todas las secciones</option>
+        @for (s of secciones(); track s.Seccion_ID) {
+          <option [value]="s.Seccion_ID">{{ s.Nombre }}</option>
+        }
+      </select>
+    }
+
+    <button class="btn btn-primary" (click)="abrirCrear(pestanaActiva() === 'estudiantes' ? 'estudiante' : pestanaActiva() === 'profesores' ? 'profesor' : 'administrador')">
+      + Registrar {{ pestanaActiva() === 'estudiantes' ? 'Estudiante' : pestanaActiva() === 'profesores' ? 'Profesor' : 'Administrador' }}
+    </button>
+  </div>
+
+  <!-- Tabla -->
+  @if (loading()) {
+    <div class="loading">Cargando...</div>
+  } @else {
+    <!-- Estudiantes -->
+    @if (pestanaActiva() === 'estudiantes') {
+      @if (estudiantes().length === 0) {
+        <div class="empty">No se encontraron estudiantes.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Carnet</th>
+                <th>Nombre</th>
+                <th>Grado</th>
+                <th>Sección</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of estudiantes(); track e.Usuario_ID) {
+                <tr>
+                  <td><code>{{ e.Carnet }}</code></td>
+                  <td>{{ e.PrimerNombre }} {{ e.SegundoNombre }} {{ e.PrimerApellido }} {{ e.SegundoApellido }}</td>
+                  <td>{{ e.Grado }}</td>
+                  <td>{{ e.Seccion }}</td>
+                  <td>{{ e.Correo }}</td>
+                  <td class="acciones">
+                    <button class="btn-icon" title="Cambiar contraseña" (click)="abrirContrasena(e.Usuario_ID, e.PrimerNombre + ' ' + e.PrimerApellido)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- Profesores -->
+    @if (pestanaActiva() === 'profesores') {
+      @if (profesores().length === 0) {
+        <div class="empty">No se encontraron profesores.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of profesores(); track p.Usuario_ID) {
+                <tr>
+                  <td><code>{{ p.CodigoProfesor }}</code></td>
+                  <td>{{ p.PrimerNombre }} {{ p.SegundoNombre }} {{ p.PrimerApellido }} {{ p.SegundoApellido }}</td>
+                  <td>{{ p.Correo }}</td>
+                  <td>{{ p.Telefono || '—' }}</td>
+                  <td class="acciones">
+                    <button class="btn-icon" title="Cambiar contraseña" (click)="abrirContrasena(p.Usuario_ID, p.PrimerNombre + ' ' + p.PrimerApellido)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- Administradores -->
+    @if (pestanaActiva() === 'administradores') {
+      @if (administradores().length === 0) {
+        <div class="empty">No se encontraron administradores.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of administradores(); track a.Usuario_ID) {
+                <tr>
+                  <td>{{ a.PrimerNombre }} {{ a.SegundoNombre }} {{ a.PrimerApellido }} {{ a.SegundoApellido }}</td>
+                  <td>{{ a.Correo }}</td>
+                  <td>{{ a.Telefono || '—' }}</td>
+                  <td class="acciones">
+                    <button class="btn-icon" title="Cambiar contraseña" (click)="abrirContrasena(a.Usuario_ID, a.PrimerNombre + ' ' + a.PrimerApellido)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+</div>
+
+<!-- Modal Crear -->
+@if (mostrarModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Registrar {{ modalTipo() === 'estudiante' ? 'Estudiante' : modalTipo() === 'profesor' ? 'Profesor' : 'Administrador' }}</h3>
+        <button class="modal-close" (click)="cerrarModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        @if (modalMensaje()) {
+          <div class="alert" [class.alert-success]="modalExito()" [class.alert-error]="!modalExito()">
+            {{ modalMensaje() }}
+          </div>
+        }
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Nombre *</label>
+            <input class="form-control" type="text" [(ngModel)]="form.primerNombre">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Nombre</label>
+            <input class="form-control" type="text" [(ngModel)]="form.segundoNombre">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Apellido *</label>
+            <input class="form-control" type="text" [(ngModel)]="form.primerApellido">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Apellido</label>
+            <input class="form-control" type="text" [(ngModel)]="form.segundoApellido">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Correo *</label>
+          <input class="form-control" type="email" [(ngModel)]="form.correo">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-control" type="tel" [(ngModel)]="form.telefono">
+        </div>
+
+        @if (modalTipo() === 'estudiante') {
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Grado *</label>
+              <select class="form-control" [(ngModel)]="form.gradoId">
+                <option value="0">Seleccione...</option>
+                @for (g of grados(); track g.Grado_ID) {
+                  <option [value]="g.Grado_ID">{{ g.Nombre }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sección *</label>
+              <select class="form-control" [(ngModel)]="form.seccionId">
+                <option value="0">Seleccione...</option>
+                @for (s of secciones(); track s.Seccion_ID) {
+                  <option [value]="s.Seccion_ID">{{ s.Nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        }
+
+        @if (modalTipo() === 'profesor') {
+          <div class="form-group">
+            <label class="form-label">Código Profesor</label>
+            <input class="form-control" type="text" placeholder="Se auto-genera si está vacío" [(ngModel)]="form.codigoProfesor">
+          </div>
+        }
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Usuario *</label>
+            <input class="form-control" type="text" [(ngModel)]="form.username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña *</label>
+            <input class="form-control" type="password" placeholder="Mínimo 6 caracteres" [(ngModel)]="form.contrasena">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="submitCrear()" [disabled]="modalLoading()">
+          @if (modalLoading()) { Creando... } @else { Registrar }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Cambiar Contraseña -->
+@if (mostrarModalContrasena()) {
+  <div class="modal-overlay" (click)="cerrarModalContrasena()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Cambiar Contraseña</h3>
+        <button class="modal-close" (click)="cerrarModalContrasena()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="muted">Usuario: <strong>{{ usuarioContrasenaNombre() }}</strong></p>
+
+        @if (contrasenaAdminMensaje()) {
+          <div class="alert" [class.alert-success]="contrasenaAdminExito()" [class.alert-error]="!contrasenaAdminExito()">
+            {{ contrasenaAdminMensaje() }}
+          </div>
+        }
+
+        <div class="form-group">
+          <label class="form-label">Nueva Contraseña *</label>
+          <input class="form-control" type="password" placeholder="Mínimo 6 caracteres" [value]="nuevaContrasenaAdmin()" (input)="nuevaContrasenaAdmin.set($any($event.target).value)">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalContrasena()">Cancelar</button>
+        <button class="btn btn-primary" (click)="submitContrasena()" [disabled]="contrasenaAdminLoading()">
+          @if (contrasenaAdminLoading()) { Actualizando... } @else { Actualizar }
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -54,6 +54,7 @@ Passwords are BCrypt-hashed in .NET, not in the SQL seed. A future script will u
 - `SP_GenerarTokenRegistro` — create enrollment token
 - `SP_ListarTokensRegistro` — list all tokens with status
 - `SP_ValidarTokenRegistro` — check if token is valid
+- `SP_ListarCursosPorProfesor` — get all courses assigned to a professor
 
 ### Prototype (`prototipo-insbapa/`)
 
@@ -73,6 +74,7 @@ python -m http.server 5050   # from prototipo-insbapa/
 
 - The front-end is freshly scaffolded. `app.routes.ts` is empty — no routes defined yet.
 - The back-end `Program.cs` is a minimal template — no controllers, no DB connection, no middleware configured.
+- **Back-end config**: `appsettings.Development.json` is gitignored. Copy `appsettings.Development.example.json` → `appsettings.Development.json` and set your local connection string.
 - Database stored procedures expect BCrypt verification to happen in .NET code, not SQL.
 - `prototipo-insbapa/` is a standalone static prototype, not connected to the Angular front-end.
 - No CI/CD pipelines, no Docker config, no ESLint configured.

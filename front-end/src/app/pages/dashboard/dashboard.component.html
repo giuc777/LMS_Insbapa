@@ -1,0 +1,99 @@
+<div class="page">
+  @if (loading()) {
+    <div class="loading">Cargando...</div>
+  } @else {
+    <div class="page-head">
+      <div>
+        <div class="crumb">DASHBOARD</div>
+        <h1>Bienvenido, {{ authService.usuario()?.primerNombre }}</h1>
+        <div class="page-sub">{{ today }}</div>
+      </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+    @if (rol() === 'administrador' && data()) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Estudiantes totales</div>
+          <div class="stat-value">{{ data().metricas?.totalEstudiantes ?? 0 }}</div>
+          <div class="stat-foot text-success">Activos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Profesores</div>
+          <div class="stat-value">{{ data().metricas?.totalProfesores ?? 0 }}</div>
+          <div class="stat-foot">En plantilla</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cursos activos</div>
+          <div class="stat-value">{{ data().metricas?.cursosActivos ?? 0 }}</div>
+          <div class="stat-foot">Este ciclo</div>
+        </div>
+      </div>
+    }
+
+    <!-- PROFESOR DASHBOARD -->
+    @if (rol() === 'profesor' && data()) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Tareas por calificar</div>
+          <div class="stat-value">{{ data().resumen?.tareasPorCalificar ?? 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Exámenes activos</div>
+          <div class="stat-value">{{ data().resumen?.examenesActivos ?? 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Estudiantes a cargo</div>
+          <div class="stat-value">{{ data().resumen?.totalEstudiantes ?? 0 }}</div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-title">Mis Clases</div>
+        <div class="card-sub">Cursos asignados este ciclo</div>
+        <div class="clases-grid mt-2">
+          @for (clase of data().clases; track clase.AsignacionId) {
+            <div class="clase-card">
+              <div class="clase-materia">{{ clase.CursoNombre }}</div>
+              <div class="clase-info">{{ clase.Grado }} — Sección {{ clase.Seccion }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ESTUDIANTE DASHBOARD -->
+    @if (rol() === 'estudiante' && data()) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Tareas por entregar</div>
+          <div class="stat-value">{{ data().resumen?.tareasPendientes ?? 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Exámenes próximos</div>
+          <div class="stat-value">{{ data().resumen?.examenesProximos ?? 0 }}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Promedio general</div>
+          <div class="stat-value">{{ data().resumen?.promedioGeneral ?? 0 }}</div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-title">Mis Cursos</div>
+        <div class="card-sub">Cursos inscritos este ciclo</div>
+        <div class="cursos-grid mt-2">
+          @for (curso of data().cursos; track curso.CursoId) {
+            <div class="curso-card">
+              <div class="curso-icon">{{ curso.Codigo?.substring(0, 4) }}</div>
+              <div class="curso-body">
+                <div class="curso-nombre">{{ curso.Nombre }}</div>
+                <div class="curso-info">{{ curso.Profesor }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+</div>

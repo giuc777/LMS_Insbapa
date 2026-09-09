@@ -1,0 +1,115 @@
+<div class="page-head">
+  <div class="crumb">Ajustes</div>
+  <h2>Configuración</h2>
+  <div class="page-sub">Actualiza tu perfil y contraseña</div>
+</div>
+
+@if (esAdmin()) {
+  <div class="ajustes-tabs">
+    <button class="tab" [class.active]="pestanaActiva() === 'perfil'" (click)="pestanaActiva.set('perfil')">Mi Perfil</button>
+    <button class="tab" [class.active]="pestanaActiva() === 'usuarios'" (click)="pestanaActiva.set('usuarios')">Gestión de Usuarios</button>
+  </div>
+}
+
+@if (pestanaActiva() === 'perfil') {
+  <div class="ajustes-grid">
+  <!-- Información Personal -->
+  <div class="card">
+    <div class="card-title">Información Personal</div>
+    <div class="card-sub">Tus datos de perfil.</div>
+
+    @if (perfilMensaje()) {
+      <div class="alert" [class.alert-success]="perfilExito()" [class.alert-error]="!perfilExito()">
+        {{ perfilMensaje() }}
+      </div>
+    }
+
+    <form (ngSubmit)="guardarPerfil()">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Primer Nombre *</label>
+          <input class="form-control" type="text" [value]="primerNombre()" (input)="primerNombre.set($any($event.target).value)" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Segundo Nombre</label>
+          <input class="form-control" type="text" [value]="segundoNombre()" (input)="segundoNombre.set($any($event.target).value)">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Primer Apellido *</label>
+          <input class="form-control" type="text" [value]="primerApellido()" (input)="primerApellido.set($any($event.target).value)" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Segundo Apellido</label>
+          <input class="form-control" type="text" [value]="segundoApellido()" (input)="segundoApellido.set($any($event.target).value)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Correo Institucional *</label>
+        <input class="form-control" type="email" [value]="correo()" (input)="correo.set($any($event.target).value)" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Teléfono</label>
+          <input class="form-control" type="tel" [value]="telefono()" (input)="telefono.set($any($event.target).value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de Nacimiento</label>
+          <input class="form-control" type="date" [value]="fechaNacimiento()" (input)="fechaNacimiento.set($any($event.target).value)">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" type="submit" [disabled]="perfilLoading()">
+        @if (perfilLoading()) {
+          Guardando...
+        } @else {
+          Guardar Perfil
+        }
+      </button>
+    </form>
+  </div>
+
+  <!-- Seguridad y Contraseña -->
+  <div class="card">
+    <div class="card-title">Seguridad y Contraseña</div>
+    <div class="card-sub">Actualiza tu contraseña de acceso.</div>
+
+    @if (passwordMensaje()) {
+      <div class="alert" [class.alert-success]="passwordExito()" [class.alert-error]="!passwordExito()">
+        {{ passwordMensaje() }}
+      </div>
+    }
+
+    <form (ngSubmit)="cambiarContrasena()">
+      <div class="form-group">
+        <label class="form-label">Contraseña Actual *</label>
+        <input class="form-control" type="password" placeholder="••••••••" [value]="contrasenaActual()" (input)="contrasenaActual.set($any($event.target).value)" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nueva Contraseña *</label>
+        <input class="form-control" type="password" placeholder="Mínimo 6 caracteres" [value]="nuevaContrasena()" (input)="nuevaContrasena.set($any($event.target).value)" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar Contraseña *</label>
+        <input class="form-control" type="password" placeholder="Repite la nueva contraseña" [value]="confirmarContrasena()" (input)="confirmarContrasena.set($any($event.target).value)" required>
+      </div>
+
+      <button class="btn btn-primary" type="submit" [disabled]="passwordLoading()">
+        @if (passwordLoading()) {
+          Actualizando...
+        } @else {
+          Actualizar Contraseña
+        }
+      </button>
+    </form>
+  </div>
+</div>
+} @else {
+  <app-ajustes-usuarios />
+}

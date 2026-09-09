@@ -86,6 +86,34 @@ END
 GO
 
 -- -------------------------------------------------------------
+-- CURSOS — Catálogo de materias/cursos
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'CURSOS') AND type = 'U')
+BEGIN
+    CREATE TABLE CURSOS (
+        Curso_ID    INT IDENTITY(1,1) PRIMARY KEY,
+        Codigo      NVARCHAR(20)  NOT NULL,
+        Nombre      NVARCHAR(100) NOT NULL,
+        Area        NVARCHAR(50)  NULL,
+        Descripcion NVARCHAR(200) NULL,
+        Activo      BIT           NOT NULL DEFAULT 1,
+        FechaCreacion DATETIME2   NOT NULL DEFAULT GETDATE()
+    );
+
+    CREATE UNIQUE INDEX IX_CURSOS_Codigo ON CURSOS (Codigo);
+
+    INSERT INTO CURSOS (Codigo, Nombre, Area) VALUES
+        (N'MATE-I',   N'Matemáticas I',       N'Matemáticas'),
+        (N'MATE-II',  N'Matemáticas II',      N'Matemáticas'),
+        (N'MATE-III', N'Matemáticas III',     N'Matemáticas'),
+        (N'LENGUA',   N'Lengua y Literatura',  N'Humanidades'),
+        (N'CIENCIAS', N'Ciencias Naturales',   N'Ciencias'),
+        (N'HISTORIA', N'Historia Moderna',     N'Humanidades'),
+        (N'CALCULO',  N'Cálculo Avanzado',     N'Matemáticas');
+END
+GO
+
+-- -------------------------------------------------------------
 -- PERSONAS — Datos personales comunes (1:1 con USUARIOS)
 -- -------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'PERSONAS') AND type = 'U')
@@ -171,7 +199,6 @@ BEGIN
     CREATE TABLE PROFESORES (
         Profesor_ID     INT IDENTITY(1,1) PRIMARY KEY,
         CodigoProfesor  NVARCHAR(20)  NOT NULL,
-        MateriaPrincipal NVARCHAR(100) NULL,
         Persona_ID      INT           NOT NULL,
         Usuario_ID      INT           NOT NULL,
         FechaCreacion   DATETIME2     NOT NULL DEFAULT GETDATE(),
@@ -185,6 +212,35 @@ BEGIN
 
     CREATE UNIQUE INDEX IX_PROFESORES_Codigo ON PROFESORES (CodigoProfesor);
     CREATE UNIQUE INDEX IX_PROFESORES_Usuario ON PROFESORES (Usuario_ID);
+END
+GO
+
+-- -------------------------------------------------------------
+-- PROFESORES_CURSOS — Asignación de cursos a profesores
+-- Cada registro = un profesor enseña un curso en un grado/sección
+-- -------------------------------------------------------------
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'PROFESORES_CURSOS') AND type = 'U')
+BEGIN
+    CREATE TABLE PROFESORES_CURSOS (
+        Asignacion_ID INT IDENTITY(1,1) PRIMARY KEY,
+        Profesor_ID   INT NOT NULL,
+        Curso_ID      INT NOT NULL,
+        Grado_ID      INT NOT NULL,
+        Seccion_ID    INT NOT NULL,
+        Activo        BIT NOT NULL DEFAULT 1,
+        FechaCreacion DATETIME2 NOT NULL DEFAULT GETDATE(),
+
+        CONSTRAINT FK_PC_PROFESORES FOREIGN KEY (Profesor_ID)
+            REFERENCES PROFESORES (Profesor_ID),
+        CONSTRAINT FK_PC_CURSOS FOREIGN KEY (Curso_ID)
+            REFERENCES CURSOS (Curso_ID),
+        CONSTRAINT FK_PC_GRADOS FOREIGN KEY (Grado_ID)
+            REFERENCES GRADOS (Grado_ID),
+        CONSTRAINT FK_PC_SECCIONES FOREIGN KEY (Seccion_ID)
+            REFERENCES SECCIONES (Seccion_ID)
+    );
+
+    CREATE UNIQUE INDEX IX_PC_Asignacion ON PROFESORES_CURSOS (Profesor_ID, Curso_ID, Grado_ID, Seccion_ID);
 END
 GO
 

@@ -56,8 +56,21 @@ BEGIN
     VALUES (N'profesor', N'PLACEHOLDER_HASH', N'AG', @ProfRolID, @ProfPersonaID);
     SET @ProfUserID = SCOPE_IDENTITY();
 
-    INSERT INTO PROFESORES (CodigoProfesor, MateriaPrincipal, Persona_ID, Usuario_ID)
-    VALUES (N'PRF-001', N'Matemáticas', @ProfPersonaID, @ProfUserID);
+    DECLARE @ProfID INT;
+    INSERT INTO PROFESORES (CodigoProfesor, Persona_ID, Usuario_ID)
+    VALUES (N'PRF-001', @ProfPersonaID, @ProfUserID);
+    SET @ProfID = SCOPE_IDENTITY();
+
+    -- Asignar cursos: Matemáticas I (Primero A), Matemáticas II (Segundo A)
+    DECLARE @CursoMateI INT = (SELECT Curso_ID FROM CURSOS WHERE Codigo = N'MATE-I');
+    DECLARE @CursoMateII INT = (SELECT Curso_ID FROM CURSOS WHERE Codigo = N'MATE-II');
+    DECLARE @Grado1 INT = (SELECT Grado_ID FROM GRADOS WHERE Nombre = N'Primero Básico');
+    DECLARE @Grado2 INT = (SELECT Grado_ID FROM GRADOS WHERE Nombre = N'Segundo Básico');
+    DECLARE @SeccionA INT = (SELECT Seccion_ID FROM SECCIONES WHERE Nombre = N'A');
+
+    INSERT INTO PROFESORES_CURSOS (Profesor_ID, Curso_ID, Grado_ID, Seccion_ID)
+    VALUES (@ProfID, @CursoMateI, @Grado1, @SeccionA),
+           (@ProfID, @CursoMateII, @Grado2, @SeccionA);
 
     PRINT 'Profesor creado (Username: profesor) — actualizar contraseña con hash BCrypt desde .NET';
 END

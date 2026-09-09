@@ -221,8 +221,7 @@ BEGIN
         s.Nombre AS Seccion,
         -- Datos de profesor si aplica
         pr.Profesor_ID,
-        pr.CodigoProfesor,
-        pr.MateriaPrincipal
+        pr.CodigoProfesor
     FROM USUARIOS u
     INNER JOIN ROLES r ON r.Rol_ID = u.Rol_ID
     INNER JOIN PERSONAS p ON p.Persona_ID = u.Persona_ID
@@ -231,6 +230,41 @@ BEGIN
     LEFT JOIN SECCIONES s ON s.Seccion_ID = e.Seccion_ID
     LEFT JOIN PROFESORES pr ON pr.Usuario_ID = u.Usuario_ID
     WHERE u.Usuario_ID = @Usuario_ID;
+END
+GO
+
+-- =============================================================
+-- SP: SP_ListarCursosPorProfesor
+-- Retorna todos los cursos asignados a un profesor.
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ListarCursosPorProfesor')
+    DROP PROCEDURE SP_ListarCursosPorProfesor;
+GO
+
+CREATE PROCEDURE SP_ListarCursosPorProfesor
+    @Usuario_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        pc.Asignacion_ID,
+        c.Curso_ID,
+        c.Codigo   AS CursoCodigo,
+        c.Nombre   AS CursoNombre,
+        c.Area     AS CursoArea,
+        g.Grado_ID,
+        g.Nombre   AS Grado,
+        s.Seccion_ID,
+        s.Nombre   AS Seccion
+    FROM PROFESORES_CURSOS pc
+    INNER JOIN PROFESORES pr ON pr.Profesor_ID = pc.Profesor_ID
+    INNER JOIN CURSOS c ON c.Curso_ID = pc.Curso_ID
+    INNER JOIN GRADOS g ON g.Grado_ID = pc.Grado_ID
+    INNER JOIN SECCIONES s ON s.Seccion_ID = pc.Seccion_ID
+    WHERE pr.Usuario_ID = @Usuario_ID
+      AND pc.Activo = 1
+    ORDER BY g.Orden, s.Nombre, c.Nombre;
 END
 GO
 
@@ -460,8 +494,7 @@ CREATE PROCEDURE SP_RegistrarProfesor
     @Telefono         NVARCHAR(20),
     @Username         NVARCHAR(50),
     @ContrasenaHash   NVARCHAR(200),
-    @CodigoProfesor   NVARCHAR(20),
-    @MateriaPrincipal NVARCHAR(100)
+    @CodigoProfesor   NVARCHAR(20)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -518,8 +551,8 @@ BEGIN
         END
 
         -- 8. Insertar PROFESOR
-        INSERT INTO PROFESORES (CodigoProfesor, MateriaPrincipal, Persona_ID, Usuario_ID)
-        VALUES (@CodigoProfesor, @MateriaPrincipal, @PersonaID, @UsuarioID);
+        INSERT INTO PROFESORES (CodigoProfesor, Persona_ID, Usuario_ID)
+        VALUES (@CodigoProfesor, @PersonaID, @UsuarioID);
 
         COMMIT TRANSACTION;
 
@@ -532,8 +565,7 @@ BEGIN
             @PrimerNombre     AS PrimerNombre,
             @PrimerApellido   AS PrimerApellido,
             @Correo           AS Correo,
-            @CodigoProfesor   AS CodigoProfesor,
-            @MateriaPrincipal AS MateriaPrincipal;
+            @CodigoProfesor   AS CodigoProfesor;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
@@ -621,6 +653,125 @@ BEGIN
         DECLARE @ErrorMsg NVARCHAR(4000) = ERROR_MESSAGE();
         RAISERROR(@ErrorMsg, 16, 1);
     END CATCH
+END
+GO
+
+-- =============================================================
+-- SP: SP_ObtenerMetricasAdmin
+-- Retorna métricas generales del sistema para el dashboard admin.
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ObtenerMetricasAdmin')
+    DROP PROCEDURE SP_ObtenerMetricasAdmin;
+GO
+
+CREATE PROCEDURE SP_ObtenerMetricasAdmin
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        (SELECT COUNT(*) FROM ESTUDIANTES e INNER JOIN USUARIOS u ON u.Usuario_ID = e.Usuario_ID WHERE u.Activo = 1) AS TotalEstudiantes,
+        (SELECT COUNT(*) FROM PROFESORES pr INNER JOIN USUARIOS u ON u.Usuario_ID = pr.Usuario_ID WHERE u.Activo = 1) AS TotalProfesores,
+        (SELECT COUNT(*) FROM PROFESORES_CURSOS pc WHERE pc.Activo = 1) AS CursosActivos;
+END
+GO
+
+-- =============================================================
+-- SP: SP_ObtenerResumenProfesor
+-- Retorna resumen del dashboard del profesor.
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ObtenerResumenProfesor')
+    DROP PROCEDURE SP_ObtenerResumenProfesor;
+GO
+
+CREATE PROCEDURE SP_ObtenerResumenProfesor
+    @Usuario_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @ProfesorID INT;
+    SELECT @ProfesorID = Profesor_ID FROM PROFESORES WHERE Usuario_ID = @Usuario_ID;
+
+    -- Tareas por calificar (entregadas sin nota)
+    DECLARE @TareasPorCalificar INT = 0;
+
+    -- Total de estudiantes a cargo
+    DECLARE @TotalEstudiantes INT = 0;
+    SELECT @TotalEstudiantes = COUNT(DISTINCT e.Usuario_ID)
+    FROM PROFESORES_CURSOS pc
+    INNER JOIN ESTUDIANTES e ON e.Grado_ID = pc.Grado_ID AND e.Seccion_ID = pc.Seccion_ID
+    WHERE pc.Profesor_ID = @ProfesorID AND pc.Activo = 1;
+
+    SELECT
+        @TareasPorCalificar AS TareasPorCalificar,
+        0 AS ExamenesActivos,
+        @TotalEstudiantes AS TotalEstudiantes;
+END
+GO
+
+-- =============================================================
+-- SP: SP_ObtenerResumenEstudiante
+-- Retorna resumen del dashboard del estudiante.
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ObtenerResumenEstudiante')
+    DROP PROCEDURE SP_ObtenerResumenEstudiante;
+GO
+
+CREATE PROCEDURE SP_ObtenerResumenEstudiante
+    @Usuario_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @EstudianteID INT;
+    SELECT @EstudianteID = Estudiante_ID FROM ESTUDIANTES WHERE Usuario_ID = @Usuario_ID;
+
+    SELECT
+        0 AS TareasPendientes,
+        0 AS ExamenesProximos,
+        0 AS PromedioGeneral;
+END
+GO
+
+-- =============================================================
+-- SP: SP_ObtenerCursosEstudiante
+-- Retorna los cursos del estudiante con profesor asignado.
+-- =============================================================
+IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ObtenerCursosEstudiante')
+    DROP PROCEDURE SP_ObtenerCursosEstudiante;
+GO
+
+CREATE PROCEDURE SP_ObtenerCursosEstudiante
+    @Usuario_ID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @GradoID INT;
+    DECLARE @SeccionID INT;
+
+    SELECT @GradoID = e.Grado_ID, @SeccionID = e.Seccion_ID
+    FROM ESTUDIANTES e WHERE e.Usuario_ID = @Usuario_ID;
+
+    SELECT
+        c.Curso_ID AS CursoId,
+        c.Codigo AS Codigo,
+        c.Nombre AS Nombre,
+        c.Area AS Area,
+        g.Nombre AS Grado,
+        s.Nombre AS Seccion,
+        p.PrimerNombre + ' ' + p.PrimerApellido AS Profesor
+    FROM PROFESORES_CURSOS pc
+    INNER JOIN CURSOS c ON c.Curso_ID = pc.Curso_ID
+    INNER JOIN GRADOS g ON g.Grado_ID = pc.Grado_ID
+    INNER JOIN SECCIONES s ON s.Seccion_ID = pc.Seccion_ID
+    INNER JOIN PROFESORES pr ON pr.Profesor_ID = pc.Profesor_ID
+    INNER JOIN PERSONAS p ON p.Persona_ID = pr.Persona_ID
+    WHERE pc.Grado_ID = @GradoID
+      AND pc.Seccion_ID = @SeccionID
+      AND pc.Activo = 1
+    ORDER BY c.Nombre;
 END
 GO
 

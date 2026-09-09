@@ -1,0 +1,94 @@
+<div class="login-split">
+  <div class="login-hero">
+    <div class="hero-overlay">
+      <div class="hero-brand">
+        <div class="hero-logo">INSBAPA</div>
+        <h1 class="hero-title">Plataforma de educación Inteligente y evaluación académica</h1>
+        <p class="hero-tagline">Accede a tus cursos, sigue tu progreso y colabora con tus compañeros en nuestro ecosistema de aprendizaje unificado.</p>
+      </div>
+      <div class="hero-footer">
+        <p>&copy; 2026 INSBAPA. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-panel">
+    <div class="login-form-wrapper">
+      <h2 class="login-heading">Iniciar Sesión</h2>
+
+      <div class="role-select">
+        <label class="role-card" [class.active]="rol() === 'estudiante'">
+          <input type="radio" name="rol" value="estudiante" [checked]="rol() === 'estudiante'" (change)="rol.set('estudiante')">
+          <span class="role-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>
+            </svg>
+          </span>
+          <span class="role-label">Estudiante</span>
+        </label>
+        <label class="role-card" [class.active]="rol() === 'profesor'">
+          <input type="radio" name="rol" value="profesor" [checked]="rol() === 'profesor'" (change)="rol.set('profesor')">
+          <span class="role-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.66 2.69 3 6 3s6-1.34 6-3v-5"/>
+              <path d="M12 15v3"/><circle cx="12" cy="18" r="1"/>
+            </svg>
+          </span>
+          <span class="role-label">Profesor</span>
+        </label>
+        <label class="role-card" [class.active]="rol() === 'administrador'">
+          <input type="radio" name="rol" value="administrador" [checked]="rol() === 'administrador'" (change)="rol.set('administrador')">
+          <span class="role-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span class="role-label">Admin</span>
+        </label>
+      </div>
+
+      @if (error()) {
+        <div class="login-error">{{ error() }}</div>
+      }
+
+      <form (ngSubmit)="onLogin()">
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input
+            class="form-control"
+            type="text"
+            placeholder="Ingrese su usuario"
+            [value]="username()"
+            (input)="username.set($any($event.target).value)"
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input
+            class="form-control"
+            type="password"
+            placeholder="Ingrese su contraseña"
+            [value]="password()"
+            (input)="password.set($any($event.target).value)"
+          >
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit" [disabled]="loading()">
+          @if (loading()) {
+            Verificando...
+          } @else {
+            Iniciar Sesión
+          }
+        </button>
+      </form>
+
+      <div class="login-demo">
+        <p class="demo-title">Credenciales demo:</p>
+        <p><strong>Estudiante:</strong> estudiante / estudiante123</p>
+        <p><strong>Profesor:</strong> profesor / profesor123</p>
+        <p><strong>Admin:</strong> admin / admin123</p>
+      </div>
+    </div>
+  </div>
+</div>
