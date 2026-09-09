@@ -1,0 +1,5 @@
+Contraseñas demo actualizadas correctamente.
+  admin      / admin123
+  profesor   / profesor123
+  estudiante / estudiante123
+========================================

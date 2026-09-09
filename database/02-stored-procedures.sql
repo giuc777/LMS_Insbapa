@@ -409,12 +409,13 @@ IF EXISTS (SELECT * FROM sys.procedures WHERE name = 'SP_ActualizarPerfil')
     DROP PROCEDURE SP_ActualizarPerfil;
 GO
 
-CREATE PROCEDURE SP_ActualizarPerfil
+CREATE OR ALTER PROCEDURE SP_ActualizarPerfil
     @Usuario_ID     INT,
     @PrimerNombre   NVARCHAR(50),
     @SegundoNombre  NVARCHAR(50),
     @PrimerApellido NVARCHAR(50),
     @SegundoApellido NVARCHAR(50),
+	@Correo NVARCHAR(20),
     @Telefono       NVARCHAR(20),
     @FechaNacimiento DATE
 AS
@@ -435,6 +436,7 @@ BEGIN
         SegundoNombre  = @SegundoNombre,
         PrimerApellido = @PrimerApellido,
         SegundoApellido = @SegundoApellido,
+		Correo = @Correo,
         Telefono       = @Telefono,
         FechaNacimiento = @FechaNacimiento
     WHERE Persona_ID = @PersonaID;
