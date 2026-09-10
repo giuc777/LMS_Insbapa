@@ -6,9 +6,9 @@ INSBAPA — LMS platform for a secondary education institute. Monorepo with thre
 
 ## Structure
 
-- `front-end/` — Angular 21 app (pnpm, Vitest, Prettier). Routes are empty; app is scaffolded but not wired yet.
-- `back-end/API-LMS/` — .NET 10 Web API. Minimal; only `Program.cs` with a "Hello World" endpoint.
-- `database/` — SQL Server scripts in order: `01-create-schema.sql`, `02-stored-procedures.sql`, `03-seed-data.sql`.
+- `front-end/` — Angular 21 app (pnpm, Vitest, Playwright E2E). Full login, dashboard, shell, ajustes components with services, guards, interceptors.
+- `back-end/API-LMS/` — .NET 10 Web API. Endpoints for auth, profile, dashboard, admin CRUD. Uses BCrypt + JWT.
+- `database/` — SQL Server scripts: schema, stored procedures, seed data.
 - `prototipo-insbapa/` — Static HTML/CSS/JS prototype. See `prototipo-insbapa/AGENTS.md` for details.
 
 ## Commands
@@ -16,10 +16,15 @@ INSBAPA — LMS platform for a secondary education institute. Monorepo with thre
 ### Front-end (`front-end/`)
 
 ```bash
-pnpm install          # install deps
-pnpm start            # dev server → http://localhost:4200
-pnpm build            # production build
-pnpm test             # run Vitest unit tests
+pnpm install              # install deps
+pnpm start                # dev server → http://localhost:4200
+pnpm build                # production build
+pnpm test                 # run Vitest unit tests
+pnpm test:e2e             # run Playwright E2E tests (requires both servers running)
+pnpm test:e2e:login       # run only login module E2E tests
+pnpm test:e2e:ui          # Playwright UI mode (interactive)
+pnpm test:e2e:debug       # Playwright debug mode (step by step)
+pnpm test:e2e:report      # open HTML test report
 ```
 
 Package manager is **pnpm** (configured in `angular.json` → `cli.packageManager`).
@@ -27,34 +32,20 @@ Package manager is **pnpm** (configured in `angular.json` → `cli.packageManage
 ### Back-end (`back-end/API-LMS/API-LMS/`)
 
 ```bash
-dotnet run            # starts API on http://localhost:5000
-dotnet build          # compile
+dotnet run                # starts API on http://localhost:5275
+dotnet build              # compile
 ```
 
 Requires .NET 10 SDK.
 
 ### Database (`database/`)
 
-Run scripts in order against SQL Server:
+Run scripts in order against SQL Server (`.\SQLEXPRESS`):
 1. `01-create-schema.sql` — creates `INSBAPA` database and tables
-2. `02-stored-procedures.sql` — stored procedures (see list below)
-3. `03-seed-data.sql` — demo admin/profesor/estudiante (passwords are PLACEHOLDER_HASH)
-4. `04-update-passwords.sql` — replaces PLACEHOLDER_HASH with real BCrypt hashes
+2. `02-stored-procedures.sql` — stored procedures
+3. `03-seed-data.sql` — demo admin/profesor/estudiante + token `REG-DEMO2026`
 
-Passwords are BCrypt-hashed in .NET, not in the SQL seed. A future script will update them.
-
-**Stored procedures available:**
-- `SP_Login` — validate credentials, return user data
-- `SP_RegistrarEstudiante` — create person + user + student (requires token)
-- `SP_RegistrarProfesor` — create person + user + professor
-- `SP_RegistrarAdministrador` — create person + user with admin role
-- `SP_ObtenerUsuarioPorId` — get user by ID with all related data
-- `SP_ActualizarPerfil` — update person data
-- `SP_CambiarContrasena` — update password hash
-- `SP_GenerarTokenRegistro` — create enrollment token
-- `SP_ListarTokensRegistro` — list all tokens with status
-- `SP_ValidarTokenRegistro` — check if token is valid
-- `SP_ListarCursosPorProfesor` — get all courses assigned to a professor
+Quick run: `sqlcmd -S .\SQLEXPRESS -E -i database\01-create-schema.sql` (repeat for each file).
 
 ### Prototype (`prototipo-insbapa/`)
 
@@ -63,19 +54,41 @@ python -m http.server 5050   # from prototipo-insbapa/
 # open http://localhost:5050/login.html
 ```
 
+## E2E Testing (Playwright)
+
+Location: `front-end/tests-e2e/`
+
+```
+tests-e2e/
+├── playwright.config.ts         # config: webServer auto-starts Angular + .NET
+├── test-data.ts                 # test credentials (student/teacher/admin)
+├── fixtures/auth.fixture.ts     # authenticated page fixtures per role
+├── pages/
+│   ├── login.page.ts            # LoginPage POM
+│   └── shell.page.ts            # ShellPage POM
+└── tests/
+    ├── login.spec.ts            # 10 tests: login page, success, failure, loading
+    ├── auth-guard.spec.ts       # 4 tests: redirect, session, logout, persistence
+    └── ajustes.spec.ts          # 3 tests: profile, password, admin tabs
+```
+
+**Requirements:** Both Angular (`:4200`) and .NET API (`:5275`) must be running. The `playwright.config.ts` has `webServer` config to auto-start them if `reuseExistingServer: true`.
+
+**Key pattern:** Radio buttons in login are CSS-hidden; the Page Object clicks the `<label class="role-card">` wrapper, not the `<input>`.
+
 ## Code style
 
-- **Front-end**: Prettier with single quotes, 100 char width, Angular HTML parser. TypeScript strict mode enabled.
+- **Front-end**: Prettier with single quotes, 100 char width, Angular HTML parser. TypeScript strict mode.
 - **EditorConfig**: 2-space indent, UTF-8, final newline.
 - **Back-end**: .NET conventions, nullable enabled, implicit usings.
-- **Prototype**: Vanilla JS, IIFE modules, no linter. Verify with `node --check`.
+- **Prototype**: Vanilla JS, IIFE modules, no linter.
 
 ## Gotchas
 
-- The front-end is freshly scaffolded. `app.routes.ts` is empty — no routes defined yet.
-- The back-end `Program.cs` is a minimal template — no controllers, no DB connection, no middleware configured.
 - **Back-end config**: `appsettings.Development.json` is gitignored. Copy `appsettings.Development.example.json` → `appsettings.Development.json` and set your local connection string.
-- Database stored procedures expect BCrypt verification to happen in .NET code, not SQL.
+- Database stored procedures expect BCrypt verification to happen in .NET code, not SQL. Seed data uses `PLACEHOLDER_HASH`.
+- The API runs on port `5275` (not 5000) — check `launchSettings.json`.
 - `prototipo-insbapa/` is a standalone static prototype, not connected to the Angular front-end.
 - No CI/CD pipelines, no Docker config, no ESLint configured.
-- Front-end test runner is Vitest (not Karma/Jasmine).
+- Front-end unit tests use Vitest (not Karma/Jasmine). E2E tests use Playwright.
+- Playwright radio buttons: do not use `locator.check()` on hidden `<input type="radio">`; click the parent `<label>` instead.

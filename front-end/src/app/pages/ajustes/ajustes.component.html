@@ -1,4 +1,4 @@
-<div class="page-head">
+<div class="page-head" data-testid="ajustes-page">
   <div class="crumb">Ajustes</div>
   <h2>Configuración</h2>
   <div class="page-sub">Actualiza tu perfil y contraseña</div>
@@ -24,7 +24,7 @@
       </div>
     }
 
-    <form (ngSubmit)="guardarPerfil()">
+    <form (ngSubmit)="guardarPerfil()" data-testid="profile-form">
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Primer Nombre *</label>
@@ -84,7 +84,7 @@
       </div>
     }
 
-    <form (ngSubmit)="cambiarContrasena()">
+    <form (ngSubmit)="cambiarContrasena()" data-testid="password-form">
       <div class="form-group">
         <label class="form-label">Contraseña Actual *</label>
         <input class="form-control" type="password" placeholder="••••••••" [value]="contrasenaActual()" (input)="contrasenaActual.set($any($event.target).value)" required>
