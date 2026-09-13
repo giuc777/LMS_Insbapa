@@ -11,21 +11,78 @@ public static class AdminUsuariosEndpoints
         // ── Listar ──────────────────────────────────────────────
 
         app.MapGet("/api/admin/estudiantes", [Authorize(Roles = "Administrador")] async (
-            string? busqueda, int? gradoId, int? seccionId, DbService db) =>
+            string? busqueda, int? gradoId, int? seccionId, int? pagina, int? tamanioPagina, DbService db) =>
         {
-            var parametros = new Dictionary<string, object>();
+            var parametros = new Dictionary<string, object?>();
             if (!string.IsNullOrWhiteSpace(busqueda)) parametros["@Busqueda"] = busqueda;
-            if (gradoId.HasValue) parametros["@Grado_ID"] = gradoId.Value;
-            if (seccionId.HasValue) parametros["@Seccion_ID"] = seccionId.Value;
+            if (gradoId.HasValue) parametros["@Grado_ID"] = gradoId;
+            if (seccionId.HasValue) parametros["@Seccion_ID"] = seccionId;
+            parametros["@Pagina"] = pagina ?? 1;
+            parametros["@TamanioPagina"] = tamanioPagina ?? 10;
 
-            var resultado = await db.EjecutarSpAsync("SP_ListarEstudiantes",
-                parametros.Count > 0 ? parametros : null);
+            var resultado = await db.EjecutarSpAsync("SP_ListarEstudiantesPaginado", parametros);
             return Results.Ok(resultado);
         })
-        .WithName("ListarEstudiantes")
+        .WithName("ListarEstudiantesPaginado")
         .WithTags("Admin")
         .RequireAuthorization()
         .Produces(200);
+
+        // ── Detalle, cursos y edición de estudiante ────────────
+
+        app.MapGet("/api/admin/estudiantes/{id:int}", [Authorize(Roles = "Administrador")] async (
+            int id, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?> { ["@Estudiante_ID"] = id };
+            var resultado = await db.EjecutarSpAsync("SP_ObtenerEstudiantePorId", parametros);
+            if (resultado.Count == 0)
+                return Results.NotFound(new { error = "Estudiante no encontrado." });
+            return Results.Ok(resultado[0]);
+        })
+        .WithName("ObtenerEstudiantePorId")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200)
+        .Produces(404);
+
+        app.MapGet("/api/admin/estudiantes/{id:int}/cursos", [Authorize(Roles = "Administrador")] async (
+            int id, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?> { ["@Estudiante_ID"] = id };
+            var resultado = await db.EjecutarSpAsync("SP_EstudianteCursosInscritos", parametros);
+            return Results.Ok(resultado);
+        })
+        .WithName("EstudianteCursosInscritos")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200);
+
+        app.MapPut("/api/admin/estudiantes/{id:int}", [Authorize(Roles = "Administrador")] async (
+            int id, ActualizarEstudianteRequest request, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?>
+            {
+                ["@Estudiante_ID"] = id,
+                ["@PrimerNombre"] = request.PrimerNombre,
+                ["@SegundoNombre"] = request.SegundoNombre ?? (object)DBNull.Value,
+                ["@PrimerApellido"] = request.PrimerApellido,
+                ["@SegundoApellido"] = request.SegundoApellido ?? (object)DBNull.Value,
+                ["@Correo"] = request.Correo,
+                ["@Telefono"] = request.Telefono ?? (object)DBNull.Value,
+                ["@Grado_ID"] = request.GradoId,
+                ["@Seccion_ID"] = request.SeccionId,
+                ["@Activo"] = request.Activo
+            };
+            var resultado = await db.EjecutarSpAsync("SP_ActualizarEstudianteAdmin", parametros);
+            if (resultado.Count == 0)
+                return Results.BadRequest(new { error = "Error al actualizar el estudiante." });
+            return Results.Ok(new { message = resultado[0]["Mensaje"]?.ToString() });
+        })
+        .WithName("ActualizarEstudianteAdmin")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200)
+        .Produces(400);
 
         app.MapGet("/api/admin/profesores", [Authorize(Roles = "Administrador")] async (
             string? busqueda, DbService db) =>
@@ -249,4 +306,17 @@ public class AdminCambiarContrasenaRequest
 {
     public int UsuarioId { get; set; }
     public string NuevaContrasena { get; set; } = string.Empty;
+}
+
+public class ActualizarEstudianteRequest
+{
+    public string PrimerNombre { get; set; } = string.Empty;
+    public string? SegundoNombre { get; set; }
+    public string PrimerApellido { get; set; } = string.Empty;
+    public string? SegundoApellido { get; set; }
+    public string Correo { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
+    public int GradoId { get; set; }
+    public int SeccionId { get; set; }
+    public bool Activo { get; set; }
 }

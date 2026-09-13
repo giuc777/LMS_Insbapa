@@ -55,6 +55,20 @@ export class AdminService {
     });
   }
 
+  // ── Estudiantes (detalle, cursos, edición) ──────────────
+
+  obtenerEstudiantePorId(id: number) {
+    return this.http.get<any>(`${this.apiUrl}/api/admin/estudiantes/${id}`);
+  }
+
+  obtenerEstudianteCursos(id: number) {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/estudiantes/${id}/cursos`);
+  }
+
+  actualizarEstudiante(id: number, data: any) {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/api/admin/estudiantes/${id}`, data);
+  }
+
   // ── Cursos ────────────────────────────────────────────
 
   listarCursosAdmin(busqueda?: string, gradoId?: number, seccionId?: number) {
