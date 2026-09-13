@@ -113,6 +113,7 @@ app.MapAuthEndpoints();
 app.MapDashboardEndpoints();
 app.MapPerfilEndpoints();
 app.MapAdminUsuariosEndpoints();
+app.MapAdminCursosEndpoints();
 
 app.MapGet("/", () => "INSBAPA API is running.");
 

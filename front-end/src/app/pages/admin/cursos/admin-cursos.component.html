@@ -1,0 +1,166 @@
+<div class="page-head">
+  <div class="crumb">Administrador / Cursos</div>
+  <h2>Gestión de Cursos</h2>
+  <div class="page-sub">Asignar materias a grados, secciones y profesores</div>
+</div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" placeholder="Buscar materia..." [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" (keyup.enter)="cargarDatos()">
+  </div>
+
+  <select class="form-select" [value]="gradoFiltro()" (change)="gradoFiltro.set($any($event.target).value); cargarDatos()">
+    <option value="">Todos los grados</option>
+    @for (g of grados(); track g.Grado_ID) {
+      <option [value]="g.Grado_ID">{{ g.Nombre }}</option>
+    }
+  </select>
+
+  <select class="form-select" [value]="seccionFiltro()" (change)="seccionFiltro.set($any($event.target).value); cargarDatos()">
+    <option value="">Todas las secciones</option>
+    @for (s of secciones(); track s.Seccion_ID) {
+      <option [value]="s.Seccion_ID">{{ s.Nombre }}</option>
+    }
+  </select>
+
+  <button class="btn btn-primary" (click)="abrirCrear()">+ Asignar Curso</button>
+</div>
+
+@if (loading()) {
+  <div class="loading">Cargando cursos...</div>
+} @else {
+  @if (cursos().length === 0) {
+    <div class="empty">No se encontraron cursos asignados.</div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Materia</th>
+            <th>Grado</th>
+            <th>Sección</th>
+            <th>Profesor</th>
+            <th>Estudiantes</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of cursos(); track c.Asignacion_ID) {
+            <tr>
+              <td><code>{{ c.Codigo }}</code></td>
+              <td>{{ c.Materia }}</td>
+              <td>{{ c.Grado }}</td>
+              <td>{{ c.Seccion }}</td>
+              <td>{{ c.Profesor }}</td>
+              <td>{{ c.Estudiantes }}</td>
+              <td class="acciones">
+                <button class="btn-icon" title="Ver detalle" (click)="verDetalle(c)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="btn-icon" title="Editar" (click)="abrirEditar(c)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn-icon" title="Eliminar" (click)="eliminar(c)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Modal Crear/Editar -->
+@if (mostrarModal()) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ esEdicion() ? 'Editar' : 'Asignar' }} Curso</h3>
+        <button class="modal-close" (click)="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (formMensaje()) {
+          <div class="alert" [class.alert-success]="formExito()" [class.alert-error]="!formExito()">{{ formMensaje() }}</div>
+        }
+
+        <div class="form-group">
+          <label class="form-label">Materia *</label>
+          <select class="form-control" [(ngModel)]="form.cursoId">
+            <option value="0">Seleccione...</option>
+            @for (c of cursosCatalogo(); track c.Curso_ID) {
+              <option [value]="c.Curso_ID">{{ c.Nombre }} ({{ c.Codigo }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Grado *</label>
+            <select class="form-control" [(ngModel)]="form.gradoId">
+              <option value="0">Seleccione...</option>
+              @for (g of grados(); track g.Grado_ID) {
+                <option [value]="g.Grado_ID">{{ g.Nombre }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sección *</label>
+            <select class="form-control" [(ngModel)]="form.seccionId">
+              <option value="0">Seleccione...</option>
+              @for (s of secciones(); track s.Seccion_ID) {
+                <option [value]="s.Seccion_ID">{{ s.Nombre }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Profesor *</label>
+          <select class="form-control" [(ngModel)]="form.profesorId">
+            <option value="0">Seleccione...</option>
+            @for (p of profesoresCatalogo(); track p.Profesor_ID) {
+              <option [value]="p.Profesor_ID">{{ p.Nombre }} ({{ p.CodigoProfesor }})</option>
+            }
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="submit()" [disabled]="formLoading()">
+          @if (formLoading()) { Guardando... } @else { {{ esEdicion() ? 'Actualizar' : 'Asignar' }} }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Detalle -->
+@if (mostrarDetalle()) {
+  <div class="modal-overlay" (click)="cerrarDetalle()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Detalle del Curso</h3>
+        <button class="modal-close" (click)="cerrarDetalle()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (cursoDetalle(); as c) {
+          <div class="detail-row"><strong>Materia:</strong> {{ c.Materia }} ({{ c.Codigo }})</div>
+          <div class="detail-row"><strong>Área:</strong> {{ c.Area }}</div>
+          <div class="detail-row"><strong>Grado:</strong> {{ c.Grado }}</div>
+          <div class="detail-row"><strong>Sección:</strong> {{ c.Seccion }}</div>
+          <div class="detail-row"><strong>Profesor:</strong> {{ c.Profesor }}</div>
+          <div class="detail-row"><strong>Estudiantes:</strong> {{ c.Estudiantes }}</div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarDetalle()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

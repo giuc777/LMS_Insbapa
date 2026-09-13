@@ -54,4 +54,34 @@ export class AdminService {
       nuevaContrasena
     });
   }
+
+  // ── Cursos ────────────────────────────────────────────
+
+  listarCursosAdmin(busqueda?: string, gradoId?: number, seccionId?: number) {
+    let params = new HttpParams();
+    if (busqueda) params = params.set('busqueda', busqueda);
+    if (gradoId) params = params.set('gradoId', gradoId.toString());
+    if (seccionId) params = params.set('seccionId', seccionId.toString());
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/cursos`, { params });
+  }
+
+  obtenerCursosCatalogo() {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/cursos/catalogo`);
+  }
+
+  obtenerProfesoresCatalogo() {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/cursos/profesores-catalogo`);
+  }
+
+  crearCursoAsignacion(data: any) {
+    return this.http.post<{ asignacionId: number; message: string }>(`${this.apiUrl}/api/admin/cursos`, data);
+  }
+
+  actualizarCursoAsignacion(id: number, data: any) {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/api/admin/cursos/${id}`, data);
+  }
+
+  eliminarCursoAsignacion(id: number) {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/api/admin/cursos/${id}`);
+  }
 }
