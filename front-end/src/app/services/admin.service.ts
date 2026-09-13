@@ -69,6 +69,20 @@ export class AdminService {
     return this.http.put<{ message: string }>(`${this.apiUrl}/api/admin/estudiantes/${id}`, data);
   }
 
+  // ── Profesores (detalle, clases, edición) ──────────────
+
+  obtenerProfesorPorId(id: number) {
+    return this.http.get<any>(`${this.apiUrl}/api/admin/profesores/${id}`);
+  }
+
+  obtenerProfesorClases(id: number) {
+    return this.http.get<any[]>(`${this.apiUrl}/api/admin/profesores/${id}/clases`);
+  }
+
+  actualizarProfesor(id: number, data: any) {
+    return this.http.put<{ message: string }>(`${this.apiUrl}/api/admin/profesores/${id}`, data);
+  }
+
   // ── Cursos ────────────────────────────────────────────
 
   listarCursosAdmin(busqueda?: string, gradoId?: number, seccionId?: number) {

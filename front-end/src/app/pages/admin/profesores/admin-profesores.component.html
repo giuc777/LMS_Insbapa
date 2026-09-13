@@ -1,0 +1,206 @@
+<div class="page-head">
+  <div class="crumb">Administrador / Profesores</div>
+  <h2>Gestión de Profesores</h2>
+  <div class="page-sub">Buscar, registrar y gestionar profesores</div>
+</div>
+
+<div class="toolbar">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" placeholder="Buscar por nombre, código o correo..." [value]="busqueda()"
+      (input)="busqueda.set($any($event.target).value)" (keyup.enter)="buscar()">
+  </div>
+
+  <button class="btn btn-primary" (click)="cargarDatos()">Buscar</button>
+</div>
+
+@if (loading()) {
+  <div class="loading">Cargando profesores...</div>
+} @else {
+  @if (profesores().length === 0) {
+    <div class="empty">No se encontraron profesores.</div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Avatar</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (prof of profesores(); track prof.Profesor_ID) {
+            <tr>
+              <td><div class="avatar-sm">{{ iniciales(prof) }}</div></td>
+              <td><code>{{ prof.CodigoProfesor }}</code></td>
+              <td>{{ prof.PrimerNombre }} {{ prof.SegundoNombre }} {{ prof.PrimerApellido }} {{ prof.SegundoApellido }}</td>
+              <td>{{ prof.Correo }}</td>
+              <td>{{ prof.Telefono || '—' }}</td>
+              <td>
+                @if (prof.Activo) {
+                  <span class="badge badge-active">Activo</span>
+                } @else {
+                  <span class="badge badge-inactive">Inactivo</span>
+                }
+              </td>
+              <td class="acciones">
+                <button class="btn-icon" title="Ver perfil" (click)="verDetalle(prof)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="btn-icon" title="Editar" (click)="abrirEditar(prof)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Modal Editar -->
+@if (mostrarModalEditar()) {
+  <div class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Editar Profesor</h3>
+        <button class="modal-close" (click)="cerrarModales()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (formMensaje()) {
+          <div class="alert" [class.alert-success]="formExito()" [class.alert-error]="!formExito()">{{ formMensaje() }}</div>
+        }
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Nombre *</label>
+            <input class="form-control" [(ngModel)]="formEditar.primerNombre">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Nombre</label>
+            <input class="form-control" [(ngModel)]="formEditar.segundoNombre">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Primer Apellido *</label>
+            <input class="form-control" [(ngModel)]="formEditar.primerApellido">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo Apellido</label>
+            <input class="form-control" [(ngModel)]="formEditar.segundoApellido">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Correo *</label>
+            <input class="form-control" type="email" [(ngModel)]="formEditar.correo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control" [(ngModel)]="formEditar.telefono">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Código Profesor</label>
+            <input class="form-control" [(ngModel)]="formEditar.codigoProfesor">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select class="form-control" [(ngModel)]="formEditar.activo">
+              <option [value]="true">Activo</option>
+              <option [value]="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModales()">Cancelar</button>
+        <button class="btn btn-primary" (click)="submitEditar()" [disabled]="formLoading()">
+          @if (formLoading()) { Guardando... } @else { Actualizar }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Detalle -->
+@if (mostrarDetalle()) {
+  <div class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Perfil del Profesor</h3>
+        <button class="modal-close" (click)="cerrarModales()">&times;</button>
+      </div>
+      <div class="modal-body">
+        @if (profesorDetalle(); as prof) {
+          <div class="profile-header">
+            <div class="avatar-lg">{{ iniciales(prof) }}</div>
+            <div class="profile-info">
+              <h4>{{ prof.PrimerNombre }} {{ prof.SegundoNombre }} {{ prof.PrimerApellido }} {{ prof.SegundoApellido }}</h4>
+              <div class="profile-meta">
+                <code>{{ prof.CodigoProfesor }}</code>
+                @if (prof.Activo) {
+                  <span class="badge badge-active">Activo</span>
+                } @else {
+                  <span class="badge badge-inactive">Inactivo</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-row"><strong>Correo:</strong> {{ prof.Correo }}</div>
+            <div class="detail-row"><strong>Teléfono:</strong> {{ prof.Telefono || '—' }}</div>
+            <div class="detail-row"><strong>Usuario:</strong> {{ prof.Username }}</div>
+          </div>
+
+          @if (profesorClases().length > 0) {
+            <h4 class="section-title">Clases Asignadas</h4>
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Materia</th>
+                    <th>Código</th>
+                    <th>Grado</th>
+                    <th>Sección</th>
+                    <th>Estudiantes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (clase of profesorClases(); track clase.Curso_ID) {
+                    <tr>
+                      <td>{{ clase.Materia }}</td>
+                      <td><code>{{ clase.Codigo }}</code></td>
+                      <td>{{ clase.Grado }}</td>
+                      <td>{{ clase.Seccion }}</td>
+                      <td>{{ clase.Estudiantes }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="empty-clases">No tiene clases asignadas.</div>
+          }
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModales()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}

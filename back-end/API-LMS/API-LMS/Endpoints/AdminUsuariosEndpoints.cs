@@ -85,19 +85,75 @@ public static class AdminUsuariosEndpoints
         .Produces(400);
 
         app.MapGet("/api/admin/profesores", [Authorize(Roles = "Administrador")] async (
-            string? busqueda, DbService db) =>
+            string? busqueda, int? pagina, int? tamanioPagina, DbService db) =>
         {
-            var parametros = new Dictionary<string, object>();
+            var parametros = new Dictionary<string, object?>();
             if (!string.IsNullOrWhiteSpace(busqueda)) parametros["@Busqueda"] = busqueda;
+            parametros["@Pagina"] = pagina ?? 1;
+            parametros["@TamanioPagina"] = tamanioPagina ?? 10;
 
-            var resultado = await db.EjecutarSpAsync("SP_ListarProfesores",
-                parametros.Count > 0 ? parametros : null);
+            var resultado = await db.EjecutarSpAsync("SP_ListarProfesoresPaginado", parametros);
             return Results.Ok(resultado);
         })
-        .WithName("ListarProfesores")
+        .WithName("ListarProfesoresPaginado")
         .WithTags("Admin")
         .RequireAuthorization()
         .Produces(200);
+
+        // ── Detalle, clases y edición de profesor ─────────────
+
+        app.MapGet("/api/admin/profesores/{id:int}", [Authorize(Roles = "Administrador")] async (
+            int id, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?> { ["@Profesor_ID"] = id };
+            var resultado = await db.EjecutarSpAsync("SP_ObtenerProfesorPorId", parametros);
+            if (resultado.Count == 0)
+                return Results.NotFound(new { error = "Profesor no encontrado." });
+            return Results.Ok(resultado[0]);
+        })
+        .WithName("ObtenerProfesorPorId")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200)
+        .Produces(404);
+
+        app.MapGet("/api/admin/profesores/{id:int}/clases", [Authorize(Roles = "Administrador")] async (
+            int id, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?> { ["@Profesor_ID"] = id };
+            var resultado = await db.EjecutarSpAsync("SP_ProfesorClasesAsignadas", parametros);
+            return Results.Ok(resultado);
+        })
+        .WithName("ProfesorClasesAsignadas")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200);
+
+        app.MapPut("/api/admin/profesores/{id:int}", [Authorize(Roles = "Administrador")] async (
+            int id, ActualizarProfesorRequest request, DbService db) =>
+        {
+            var parametros = new Dictionary<string, object?>
+            {
+                ["@Profesor_ID"] = id,
+                ["@PrimerNombre"] = request.PrimerNombre,
+                ["@SegundoNombre"] = request.SegundoNombre ?? (object)DBNull.Value,
+                ["@PrimerApellido"] = request.PrimerApellido,
+                ["@SegundoApellido"] = request.SegundoApellido ?? (object)DBNull.Value,
+                ["@Correo"] = request.Correo,
+                ["@Telefono"] = request.Telefono ?? (object)DBNull.Value,
+                ["@CodigoProfesor"] = request.CodigoProfesor ?? (object)DBNull.Value,
+                ["@Activo"] = request.Activo
+            };
+            var resultado = await db.EjecutarSpAsync("SP_ActualizarProfesorAdmin", parametros);
+            if (resultado.Count == 0)
+                return Results.BadRequest(new { error = "Error al actualizar el profesor." });
+            return Results.Ok(new { message = resultado[0]["Mensaje"]?.ToString() });
+        })
+        .WithName("ActualizarProfesorAdmin")
+        .WithTags("Admin")
+        .RequireAuthorization()
+        .Produces(200)
+        .Produces(400);
 
         app.MapGet("/api/admin/administradores", [Authorize(Roles = "Administrador")] async (
             string? busqueda, DbService db) =>
@@ -318,5 +374,17 @@ public class ActualizarEstudianteRequest
     public string? Telefono { get; set; }
     public int GradoId { get; set; }
     public int SeccionId { get; set; }
+    public bool Activo { get; set; }
+}
+
+public class ActualizarProfesorRequest
+{
+    public string PrimerNombre { get; set; } = string.Empty;
+    public string? SegundoNombre { get; set; }
+    public string PrimerApellido { get; set; } = string.Empty;
+    public string? SegundoApellido { get; set; }
+    public string Correo { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
+    public string? CodigoProfesor { get; set; }
     public bool Activo { get; set; }
 }
