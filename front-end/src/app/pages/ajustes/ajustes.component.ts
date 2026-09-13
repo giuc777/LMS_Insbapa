@@ -1,18 +1,19 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { Usuario } from '../../models/usuario.model';
 import { AjustesUsuariosComponent } from './ajustes-usuarios/ajustes-usuarios.component';
 
 @Component({
   selector: 'app-ajustes',
   standalone: true,
-  imports: [FormsModule, AjustesUsuariosComponent],
+  imports: [AjustesUsuariosComponent],
   templateUrl: './ajustes.component.html',
   styleUrl: './ajustes.component.css'
 })
 export class AjustesComponent implements OnInit {
+  authService = inject(AuthService);
+
   pestanaActiva = signal<'perfil' | 'usuarios'>('perfil');
-  esAdmin = signal(false);
 
   primerNombre = signal('');
   segundoNombre = signal('');
@@ -22,36 +23,37 @@ export class AjustesComponent implements OnInit {
   telefono = signal('');
   fechaNacimiento = signal('');
 
+  perfilLoading = signal(false);
+  perfilMensaje = signal('');
+  perfilExito = signal(false);
+
   contrasenaActual = signal('');
   nuevaContrasena = signal('');
   confirmarContrasena = signal('');
-
-  perfilLoading = signal(false);
   passwordLoading = signal(false);
-  perfilMensaje = signal('');
   passwordMensaje = signal('');
-  perfilExito = signal(false);
   passwordExito = signal(false);
 
-  constructor(public authService: AuthService) {}
+  esAdmin = signal(false);
 
   ngOnInit(): void {
-    this.esAdmin.set(this.authService.getRolKey() === 'administrador');
     const u = this.authService.usuario();
     if (u) {
-      this.primerNombre.set(u.primerNombre || '');
-      this.segundoNombre.set(u.segundoNombre || '');
-      this.primerApellido.set(u.primerApellido || '');
-      this.segundoApellido.set(u.segundoApellido || '');
-      this.correo.set(u.correo || '');
-      this.telefono.set(u.telefono || '');
-      this.fechaNacimiento.set(u.fechaNacimiento || '');
+      this.primerNombre.set(u.primerNombre ?? '');
+      this.segundoNombre.set(u.segundoNombre ?? '');
+      this.primerApellido.set(u.primerApellido ?? '');
+      this.segundoApellido.set(u.segundoApellido ?? '');
+      this.correo.set(u.correo ?? '');
+      this.telefono.set(u.telefono ?? '');
+      this.fechaNacimiento.set(u.fechaNacimiento ?? '');
     }
+    this.esAdmin.set(this.authService.getRolKey() === 'administrador');
   }
 
   guardarPerfil(): void {
-    this.perfilMensaje.set('');
+    if (this.perfilLoading()) return;
     this.perfilLoading.set(true);
+    this.perfilMensaje.set('');
 
     this.authService.actualizarPerfil({
       primerNombre: this.primerNombre(),
@@ -59,61 +61,56 @@ export class AjustesComponent implements OnInit {
       primerApellido: this.primerApellido(),
       segundoApellido: this.segundoApellido(),
       correo: this.correo(),
-      telefono: this.telefono() || undefined,
-      fechaNacimiento: this.fechaNacimiento() || undefined,
+      telefono: this.telefono(),
+      fechaNacimiento: this.fechaNacimiento()
     }).subscribe({
-      next: (usuario) => {
-        this.authService.updateLocalUser(usuario);
-        this.perfilExito.set(true);
+      next: (res) => {
+        this.authService.updateLocalUser(res);
         this.perfilMensaje.set('Perfil actualizado correctamente.');
+        this.perfilExito.set(true);
         this.perfilLoading.set(false);
       },
       error: (err) => {
+        this.perfilMensaje.set(err.error?.message || 'Error al guardar.');
         this.perfilExito.set(false);
-        this.perfilMensaje.set(err.error?.error || 'Error al actualizar el perfil.');
         this.perfilLoading.set(false);
       }
     });
   }
 
   cambiarContrasena(): void {
-    this.passwordMensaje.set('');
+    if (this.passwordLoading()) return;
 
-    if (!this.contrasenaActual() || !this.nuevaContrasena() || !this.confirmarContrasena()) {
+    if (this.nuevaContrasena() !== this.confirmarContrasena()) {
+      this.passwordMensaje.set('Las contrasenas no coinciden.');
       this.passwordExito.set(false);
-      this.passwordMensaje.set('Complete todos los campos.');
       return;
     }
 
     if (this.nuevaContrasena().length < 6) {
+      this.passwordMensaje.set('La nueva contrasena debe tener al menos 6 caracteres.');
       this.passwordExito.set(false);
-      this.passwordMensaje.set('La nueva contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-
-    if (this.nuevaContrasena() !== this.confirmarContrasena()) {
-      this.passwordExito.set(false);
-      this.passwordMensaje.set('Las contraseñas no coinciden.');
       return;
     }
 
     this.passwordLoading.set(true);
+    this.passwordMensaje.set('');
 
     this.authService.cambiarContrasena({
       contrasenaActual: this.contrasenaActual(),
-      nuevaContrasena: this.nuevaContrasena(),
+      nuevaContrasena: this.nuevaContrasena()
     }).subscribe({
       next: () => {
+        this.passwordMensaje.set('Contrasena actualizada correctamente.');
         this.passwordExito.set(true);
-        this.passwordMensaje.set('Contraseña actualizada correctamente.');
         this.contrasenaActual.set('');
         this.nuevaContrasena.set('');
         this.confirmarContrasena.set('');
         this.passwordLoading.set(false);
       },
       error: (err) => {
+        this.passwordMensaje.set(err.error?.message || 'Error al actualizar contrasena.');
         this.passwordExito.set(false);
-        this.passwordMensaje.set(err.error?.error || 'Error al cambiar la contraseña.');
         this.passwordLoading.set(false);
       }
     });

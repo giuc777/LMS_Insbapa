@@ -333,4 +333,21 @@ public class DbService
         using var reader = await command.ExecuteReaderAsync();
         return await reader.ReadAsync();
     }
+
+    public async Task BlacklistTokenAsync(string jti, int usuarioId, DateTime fechaExpiracion, string? motivo = null)
+    {
+        using var connection = CreateConnection();
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand("SP_TokenBlacklist_Insertar", connection)
+        {
+            CommandType = System.Data.CommandType.StoredProcedure
+        };
+        command.Parameters.AddWithValue("@JTI", jti);
+        command.Parameters.AddWithValue("@Usuario_ID", usuarioId);
+        command.Parameters.AddWithValue("@FechaExpiracion", fechaExpiracion);
+        command.Parameters.AddWithValue("@Motivo", (object?)motivo ?? DBNull.Value);
+
+        await command.ExecuteNonQueryAsync();
+    }
 }
